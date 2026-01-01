@@ -18,7 +18,7 @@ import EventStepper from '@/components/EventStepper';
 const EventDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { events, loading, updateEvent } = useEvents();
+  const { events, loading, updateEvent, refetch } = useEvents();
   const { getLocation, loading: geoLoading, error: geoError } = useGeolocation();
   const { uploadPhoto, uploading } = usePhotoUpload();
   
@@ -69,16 +69,23 @@ const EventDetail = () => {
       const photoUrl = await uploadPhoto(file, 'check-in');
       
       if (photoUrl) {
-        const startOtp = generateOtp();
-        await updateEvent(event._id, {
-          status: 'checked_in',
-          checkInPhotoUrl: photoUrl,
-          checkInLatitude: location.latitude,
-          checkInLongitude: location.longitude,
-          checkInTimestamp: new Date().toISOString(),
-          startOtp: startOtp,
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/events/${event._id}/checkin`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            photoUrl,
+            latitude: location.latitude,
+            longitude: location.longitude,
+          }),
         });
-        toast.success(`OTP sent to customer: ${startOtp}`);
+        if (response.ok) {
+          const data = await response.json();
+          toast.success(`OTP sent to customer: ${data.startOtp}`);
+          await refetch(); // refresh
+        } else {
+          toast.error('Failed to complete check-in');
+        }
       }
     } catch (error) {
       console.error('Check-in error:', error);
@@ -90,18 +97,21 @@ const EventDetail = () => {
 
   // Verify start OTP
   const handleVerifyStartOtp = async () => {
-    if (otp !== event.start_otp) {
-      toast.error('Invalid OTP');
-      return;
-    }
-    
     setUpdating(true);
-    await updateEvent(event.id, {
-      status: 'started',
-      start_otp_verified_at: new Date().toISOString(),
+    const token = localStorage.getItem('token');
+    const response = await fetch(`/api/events/${event._id}/verify-start-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ otp }),
     });
-    setOtp('');
-    toast.success('Event started!');
+    if (response.ok) {
+      setOtp('');
+      toast.success('Event started!');
+      await refetch();
+    } else {
+      const error = await response.json();
+      toast.error(error.message || 'Invalid OTP');
+    }
     setUpdating(false);
   };
 
@@ -110,9 +120,9 @@ const EventDetail = () => {
     setUpdating(true);
     const photoUrl = await uploadPhoto(file, 'pre-setup');
     if (photoUrl) {
-      await updateEvent(event.id, {
-        pre_setup_photo_url: photoUrl,
-        pre_setup_notes: notes || null,
+      await updateEvent(event._id, {
+        preSetupPhotoUrl: photoUrl,
+        preSetupNotes: notes || null,
       });
       setNotes('');
     }
@@ -124,35 +134,44 @@ const EventDetail = () => {
     setUpdating(true);
     const photoUrl = await uploadPhoto(file, 'post-setup');
     if (photoUrl) {
-      const closingOtp = generateOtp();
-      await updateEvent(event.id, {
-        status: 'setup_complete',
-        post_setup_photo_url: photoUrl,
-        post_setup_notes: notes || null,
-        setup_completed_at: new Date().toISOString(),
-        closing_otp: closingOtp,
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/events/${event._id}/setup-complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          postSetupPhotoUrl: photoUrl,
+          postSetupNotes: notes || null,
+        }),
       });
-      setNotes('');
-      toast.success(`Setup complete! Closing OTP sent: ${closingOtp}`);
+      if (response.ok) {
+        const data = await response.json();
+        setNotes('');
+        toast.success(`Setup complete! Closing OTP sent: ${data.closingOtp}`);
+        await refetch();
+      } else {
+        toast.error('Failed to complete setup');
+      }
     }
     setUpdating(false);
   };
 
   // Verify closing OTP and complete event
   const handleVerifyClosingOtp = async () => {
-    if (otp !== event.closing_otp) {
-      toast.error('Invalid OTP');
-      return;
-    }
-    
     setUpdating(true);
-    await updateEvent(event.id, {
-      status: 'completed',
-      closing_otp_verified_at: new Date().toISOString(),
-      completed_at: new Date().toISOString(),
+    const token = localStorage.getItem('token');
+    const response = await fetch(`/api/events/${event._id}/verify-closing-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ otp }),
     });
-    setOtp('');
-    toast.success('Event completed successfully! 🎉');
+    if (response.ok) {
+      setOtp('');
+      toast.success('Event completed successfully! 🎉');
+      await refetch();
+    } else {
+      const error = await response.json();
+      toast.error(error.message || 'Invalid OTP');
+    }
     setUpdating(false);
   };
 
@@ -175,10 +194,10 @@ const EventDetail = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold text-foreground truncate">{event.customer_name}</h1>
+            <h1 className="text-xl font-bold text-foreground truncate">{event.customerName}</h1>
             <p className="text-sm text-muted-foreground flex items-center gap-1">
               <MapPin className="h-3 w-3" />
-              {event.event_location}
+              {event.eventLocation}
             </p>
           </div>
         </div>
@@ -194,19 +213,19 @@ const EventDetail = () => {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-muted-foreground">Customer</span>
-                <p className="font-medium text-foreground">{event.customer_name}</p>
+                <p className="font-medium text-foreground">{event.customerName}</p>
               </div>
               <div>
                 <span className="text-muted-foreground">Phone</span>
-                <p className="font-medium text-foreground">{event.customer_phone}</p>
+                <p className="font-medium text-foreground">{event.customerPhone}</p>
               </div>
               <div>
                 <span className="text-muted-foreground">Date</span>
-                <p className="font-medium text-foreground">{format(new Date(event.event_date), 'MMM dd, yyyy')}</p>
+                <p className="font-medium text-foreground">{format(new Date(event.eventDate), 'MMM dd, yyyy')}</p>
               </div>
               <div>
                 <span className="text-muted-foreground">Location</span>
-                <p className="font-medium text-foreground truncate">{event.event_location}</p>
+                <p className="font-medium text-foreground truncate">{event.eventLocation}</p>
               </div>
             </div>
           </CardContent>
@@ -265,21 +284,21 @@ const EventDetail = () => {
                 Enter the OTP provided by the customer to start the event.
                 <br />
                 <Badge variant="secondary" className="mt-2">
-                  Mock OTP: {event.start_otp}
+                  Mock OTP: {event.startOtp}
                 </Badge>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {event.check_in_photo_url && (
+              {event.checkInPhotoUrl && (
                 <img 
-                  src={event.check_in_photo_url} 
+                  src={event.checkInPhotoUrl} 
                   alt="Check-in" 
                   className="w-full h-48 object-cover rounded-lg"
                 />
               )}
-              {event.check_in_latitude && (
+              {event.checkInLatitude && (
                 <p className="text-sm text-muted-foreground">
-                  📍 Location: {event.check_in_latitude.toFixed(4)}, {event.check_in_longitude?.toFixed(4)}
+                  📍 Location: {event.checkInLatitude.toFixed(4)}, {event.checkInLongitude?.toFixed(4)}
                 </p>
               )}
               <div className="flex gap-2">
@@ -315,15 +334,15 @@ const EventDetail = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {event.pre_setup_photo_url ? (
+                {event.preSetupPhotoUrl ? (
                   <div className="space-y-2">
                     <img 
-                      src={event.pre_setup_photo_url} 
+                      src={event.preSetupPhotoUrl} 
                       alt="Pre-setup" 
                       className="w-full h-48 object-cover rounded-lg"
                     />
-                    {event.pre_setup_notes && (
-                      <p className="text-sm text-muted-foreground">📝 {event.pre_setup_notes}</p>
+                    {event.preSetupNotes && (
+                      <p className="text-sm text-muted-foreground">📝 {event.preSetupNotes}</p>
                     )}
                     <Badge variant="outline" className="text-success">
                       <CheckCircle className="h-3 w-3 mr-1" /> Uploaded
@@ -366,7 +385,7 @@ const EventDetail = () => {
             </Card>
 
             {/* Post-setup Photo */}
-            {event.pre_setup_photo_url && (
+            {event.preSetupPhotoUrl && (
               <Card className="border-0 shadow-xl animate-scale-in">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -424,27 +443,27 @@ const EventDetail = () => {
                 Get the closing OTP from the customer to complete the event.
                 <br />
                 <Badge variant="secondary" className="mt-2">
-                  Mock OTP: {event.closing_otp}
+                  Mock OTP: {event.closingOtp}
                 </Badge>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                {event.pre_setup_photo_url && (
+                {event.preSetupPhotoUrl && (
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Before</p>
                     <img 
-                      src={event.pre_setup_photo_url} 
+                      src={event.preSetupPhotoUrl} 
                       alt="Pre-setup" 
                       className="w-full h-32 object-cover rounded-lg"
                     />
                   </div>
                 )}
-                {event.post_setup_photo_url && (
+                {event.postSetupPhotoUrl && (
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">After</p>
                     <img 
-                      src={event.post_setup_photo_url} 
+                      src={event.postSetupPhotoUrl} 
                       alt="Post-setup" 
                       className="w-full h-32 object-cover rounded-lg"
                     />
@@ -480,24 +499,24 @@ const EventDetail = () => {
               <h3 className="text-xl font-bold text-foreground mb-2">Event Completed!</h3>
               <p className="text-muted-foreground mb-4">
                 This event was successfully completed on{' '}
-                {event.completed_at && format(new Date(event.completed_at), 'MMM dd, yyyy at h:mm a')}
+                {event.completedAt && format(new Date(event.completedAt), 'MMM dd, yyyy at h:mm a')}
               </p>
               <div className="grid grid-cols-2 gap-4 mt-6">
-                {event.pre_setup_photo_url && (
+                {event.preSetupPhotoUrl && (
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Before</p>
                     <img 
-                      src={event.pre_setup_photo_url} 
+                      src={event.preSetupPhotoUrl} 
                       alt="Pre-setup" 
                       className="w-full h-32 object-cover rounded-lg"
                     />
                   </div>
                 )}
-                {event.post_setup_photo_url && (
+                {event.postSetupPhotoUrl && (
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">After</p>
                     <img 
-                      src={event.post_setup_photo_url} 
+                      src={event.postSetupPhotoUrl} 
                       alt="Post-setup" 
                       className="w-full h-32 object-cover rounded-lg"
                     />
