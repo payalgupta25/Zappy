@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
 export interface Vendor {
-  id: string;
-  user_id: string;
+  _id: string;
   name: string;
-  phone: string | null;
-  email: string | null;
-  created_at: string;
-  updated_at: string;
+  phone?: string;
+  email?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export function useVendor() {
@@ -25,16 +23,20 @@ export function useVendor() {
     }
 
     const fetchVendor = async () => {
-      const { data, error } = await supabase
-        .from('vendors')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setLoading(false);
+        return;
+      }
 
-      if (error) {
+      try {
+        const response = await fetch('/api/vendors', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await response.json();
+        setVendor(data[0] || null);
+      } catch (error) {
         console.error('Error fetching vendor:', error);
-      } else {
-        setVendor(data);
       }
       setLoading(false);
     };
@@ -42,5 +44,28 @@ export function useVendor() {
     fetchVendor();
   }, [user]);
 
-  return { vendor, loading };
+  const createVendor = async (name: string, email?: string, phone?: string) => {
+    const token = localStorage.getItem('token');
+    if (!token) return { error: new Error('No token') };
+
+    try {
+      const response = await fetch('/api/vendors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name, email, phone }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setVendor(data);
+        return { data, error: null };
+      } else {
+        const error = await response.json();
+        return { data: null, error };
+      }
+    } catch (error) {
+      return { data: null, error };
+    }
+  };
+
+  return { vendor, loading, createVendor };
 }

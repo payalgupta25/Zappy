@@ -44,21 +44,21 @@ const EventCard = ({ event, onClick }: EventCardProps) => {
             </div>
             
             <h3 className="font-semibold text-foreground truncate mb-3">
-              {event.customer_name}
+              {event.customerName}
             </h3>
             
             <div className="space-y-1.5">
               <div className="flex items-center text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4 mr-2 flex-shrink-0 text-primary/70" />
-                <span className="truncate">{event.event_location}</span>
+                <span className="truncate">{event.eventLocation}</span>
               </div>
               <div className="flex items-center text-sm text-muted-foreground">
                 <Clock className="h-4 w-4 mr-2 flex-shrink-0 text-primary/70" />
-                <span>{format(new Date(event.event_date), 'MMM dd, yyyy')}</span>
+                <span>{format(new Date(event.eventDate), 'MMM dd, yyyy')}</span>
               </div>
               <div className="flex items-center text-sm text-muted-foreground">
                 <User className="h-4 w-4 mr-2 flex-shrink-0 text-primary/70" />
-                <span>{event.customer_phone}</span>
+                <span>{event.customerPhone}</span>
               </div>
             </div>
           </div>

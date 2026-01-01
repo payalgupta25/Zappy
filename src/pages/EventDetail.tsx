@@ -33,7 +33,7 @@ const EventDetail = () => {
 
   useEffect(() => {
     if (!loading && events.length > 0) {
-      const found = events.find(e => e.id === id);
+      const found = events.find(e => e._id === id);
       if (found) {
         setEvent(found);
       } else {
@@ -70,13 +70,13 @@ const EventDetail = () => {
       
       if (photoUrl) {
         const startOtp = generateOtp();
-        await updateEvent(event.id, {
+        await updateEvent(event._id, {
           status: 'checked_in',
-          check_in_photo_url: photoUrl,
-          check_in_latitude: location.latitude,
-          check_in_longitude: location.longitude,
-          check_in_timestamp: new Date().toISOString(),
-          start_otp: startOtp,
+          checkInPhotoUrl: photoUrl,
+          checkInLatitude: location.latitude,
+          checkInLongitude: location.longitude,
+          checkInTimestamp: new Date().toISOString(),
+          startOtp: startOtp,
         });
         toast.success(`OTP sent to customer: ${startOtp}`);
       }

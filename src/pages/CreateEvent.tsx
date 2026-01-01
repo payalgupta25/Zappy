@@ -32,7 +32,7 @@ const CreateEvent = () => {
     setLoading(false);
 
     if (!error && data) {
-      navigate(`/events/${data.id}`);
+      navigate(`/events/${data._id}`);
     }
   };
 

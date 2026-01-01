@@ -1,34 +1,33 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useVendor } from './useVendor';
 import { toast } from 'sonner';
 
 export type EventStatus = 'pending' | 'checked_in' | 'started' | 'setup_complete' | 'completed';
 
 export interface Event {
-  id: string;
-  vendor_id: string;
-  customer_name: string;
-  customer_phone: string;
-  event_location: string;
-  event_date: string;
+  _id: string;
+  vendor: string;
+  customerName: string;
+  customerPhone: string;
+  eventLocation: string;
+  eventDate: string;
   status: EventStatus;
-  check_in_photo_url: string | null;
-  check_in_latitude: number | null;
-  check_in_longitude: number | null;
-  check_in_timestamp: string | null;
-  start_otp: string | null;
-  start_otp_verified_at: string | null;
-  pre_setup_photo_url: string | null;
-  pre_setup_notes: string | null;
-  post_setup_photo_url: string | null;
-  post_setup_notes: string | null;
-  setup_completed_at: string | null;
-  closing_otp: string | null;
-  closing_otp_verified_at: string | null;
-  completed_at: string | null;
-  created_at: string;
-  updated_at: string;
+  checkInPhotoUrl?: string;
+  checkInLatitude?: number;
+  checkInLongitude?: number;
+  checkInTimestamp?: string;
+  startOtp?: string;
+  startOtpVerifiedAt?: string;
+  preSetupPhotoUrl?: string;
+  preSetupNotes?: string;
+  postSetupPhotoUrl?: string;
+  postSetupNotes?: string;
+  setupCompletedAt?: string;
+  closingOtp?: string;
+  closingOtpVerifiedAt?: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export function useEvents() {
@@ -43,17 +42,25 @@ export function useEvents() {
       return;
     }
 
-    const { data, error } = await supabase
-      .from('events')
-      .select('*')
-      .eq('vendor_id', vendor.id)
-      .order('event_date', { ascending: false });
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
-    if (error) {
+    try {
+      const response = await fetch('/api/events', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setEvents(data);
+      } else {
+        toast.error('Failed to load events');
+      }
+    } catch (error) {
       console.error('Error fetching events:', error);
       toast.error('Failed to load events');
-    } else {
-      setEvents(data as Event[]);
     }
     setLoading(false);
   };
@@ -70,40 +77,60 @@ export function useEvents() {
   }) => {
     if (!vendor) return { error: new Error('Vendor not found') };
 
-    const { data, error } = await supabase
-      .from('events')
-      .insert({
-        ...eventData,
-        vendor_id: vendor.id,
-      })
-      .select()
-      .single();
+    const token = localStorage.getItem('token');
+    if (!token) return { error: new Error('No token') };
 
-    if (error) {
+    try {
+      const response = await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          customerName: eventData.customer_name,
+          customerPhone: eventData.customer_phone,
+          eventLocation: eventData.event_location,
+          eventDate: eventData.event_date,
+          vendorId: vendor._id,
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        toast.success('Event created successfully');
+        await fetchEvents();
+        return { data, error: null };
+      } else {
+        const error = await response.json();
+        toast.error('Failed to create event');
+        return { data: null, error };
+      }
+    } catch (error) {
       toast.error('Failed to create event');
       return { data: null, error };
     }
-
-    toast.success('Event created successfully');
-    await fetchEvents();
-    return { data: data as Event, error: null };
   };
 
   const updateEvent = async (eventId: string, updates: Partial<Event>) => {
-    const { data, error } = await supabase
-      .from('events')
-      .update(updates)
-      .eq('id', eventId)
-      .select()
-      .single();
+    const token = localStorage.getItem('token');
+    if (!token) return { data: null, error: new Error('No token') };
 
-    if (error) {
+    try {
+      const response = await fetch(`/api/events/${eventId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(updates),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        await fetchEvents();
+        return { data, error: null };
+      } else {
+        const error = await response.json();
+        toast.error('Failed to update event');
+        return { data: null, error };
+      }
+    } catch (error) {
       toast.error('Failed to update event');
       return { data: null, error };
     }
-
-    await fetchEvents();
-    return { data: data as Event, error: null };
   };
 
   return {

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useVendor } from '@/hooks/useVendor';
@@ -6,14 +6,18 @@ import { useEvents } from '@/hooks/useEvents';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Plus, Calendar, MapPin, User, LogOut, ChevronRight } from 'lucide-react';
 import EventCard from '@/components/EventCard';
 
 const Dashboard = () => {
   const { user, loading: authLoading, signOut } = useAuth();
-  const { vendor, loading: vendorLoading } = useVendor();
+  const { vendor, loading: vendorLoading, createVendor } = useVendor();
   const { events, loading: eventsLoading } = useEvents();
   const navigate = useNavigate();
+  const [vendorName, setVendorName] = useState('');
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -24,6 +28,13 @@ const Dashboard = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate('/auth');
+  };
+
+  const handleCreateVendor = async () => {
+    if (!vendorName.trim()) return;
+    setCreating(true);
+    await createVendor(vendorName.trim());
+    setCreating(false);
   };
 
   if (authLoading || vendorLoading) {
@@ -39,7 +50,7 @@ const Dashboard = () => {
   }
 
   const todayEvents = events.filter(
-    e => e.event_date === new Date().toISOString().split('T')[0]
+    e => e.eventDate === new Date().toISOString().split('T')[0]
   );
   
   const activeEvents = events.filter(
@@ -51,6 +62,32 @@ const Dashboard = () => {
     { label: 'Active Events', value: activeEvents.length, icon: MapPin },
     { label: 'Total Events', value: events.length, icon: User },
   ];
+
+  if (!vendor) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Create Your Vendor Profile</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="vendorName">Vendor Name</Label>
+              <Input
+                id="vendorName"
+                value={vendorName}
+                onChange={(e) => setVendorName(e.target.value)}
+                placeholder="Enter your vendor name"
+              />
+            </div>
+            <Button onClick={handleCreateVendor} disabled={creating} className="w-full">
+              {creating ? 'Creating...' : 'Create Vendor'}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -139,13 +176,13 @@ const Dashboard = () => {
             <div className="space-y-4">
               {events.slice(0, 5).map((event, index) => (
                 <div 
-                  key={event.id}
+                  key={event._id}
                   className="animate-slide-up"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <EventCard 
                     event={event} 
-                    onClick={() => navigate(`/events/${event.id}`)} 
+                    onClick={() => navigate(`/events/${event._id}`)} 
                   />
                 </div>
               ))}
