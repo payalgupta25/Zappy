@@ -4,11 +4,17 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import multer from 'multer';
 import path from 'path';
+import { createClient } from '@supabase/supabase-js';
 import authRoutes from './routes/auth';
 import vendorRoutes from './routes/vendors';
 import eventRoutes from './routes/events';
 
 dotenv.config();
+
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL!,
+  process.env.VITE_SUPABASE_ANON_KEY!
+);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -17,23 +23,8 @@ const corsOptions = process.env.CORS_ORIGIN ? { origin: process.env.CORS_ORIGIN 
 app.use(cors(corsOptions));
 app.use(express.json());
 
-const uploadsPath = path.join(__dirname, '../uploads');
-console.log('Serving uploads from:', uploadsPath);
-app.use('/uploads', express.static(uploadsPath));
-
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../uploads');
-    console.log('Upload path:', uploadPath);
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
+// Configure multer for file uploads (memory storage for Supabase)
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 mongoose.connect(process.env.MONGODB_URI!)
@@ -48,14 +39,34 @@ app.get('/api/test', (req, res) => {
   res.json({ message: 'Server is working' });
 });
 
-app.post('/api/upload', upload.single('photo'), (req, res) => {
+app.post('/api/upload', upload.single('photo'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
-    const photoUrl = `/uploads/${req.file.filename}`;
-    console.log('Uploaded file:', req.file.filename);
-    res.json({ photoUrl });
+
+    const fileName = `photo-${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(req.file.originalname)}`;
+    const fileBuffer = req.file.buffer;
+    const fileType = req.file.mimetype;
+
+    const { data, error } = await supabase.storage
+      .from('uploads') // Make sure this bucket exists in Supabase
+      .upload(fileName, fileBuffer, {
+        contentType: fileType,
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Supabase upload error:', error);
+      return res.status(500).json({ message: 'Upload failed' });
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from('uploads')
+      .getPublicUrl(fileName);
+
+    console.log('Uploaded file:', fileName);
+    res.json({ photoUrl: publicUrlData.publicUrl });
   } catch (error) {
     console.error('Upload error:', error);
     res.status(500).json({ message: 'Upload failed' });
