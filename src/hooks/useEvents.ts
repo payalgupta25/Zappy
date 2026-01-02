@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { useVendor } from './useVendor';
 import { toast } from 'sonner';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
-
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL
+    ? `${import.meta.env.VITE_API_URL}/api`
+    : '/api';
 export type EventStatus = 'pending' | 'checked_in' | 'started' | 'setup_complete' | 'completed';
 
 export interface Event {

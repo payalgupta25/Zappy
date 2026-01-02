@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
-
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL
+    ? `${import.meta.env.VITE_API_URL}/api`
+    : '/api';
 export function usePhotoUpload() {
   const [uploading, setUploading] = useState(false);
 
