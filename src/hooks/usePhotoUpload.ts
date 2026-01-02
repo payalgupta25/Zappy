@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
 export function usePhotoUpload() {
   const [uploading, setUploading] = useState(false);
 
@@ -12,7 +14,7 @@ export function usePhotoUpload() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/upload', {
+      const response = await fetch(`${API_BASE_URL}/upload`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

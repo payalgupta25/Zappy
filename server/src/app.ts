@@ -13,10 +13,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+const corsOptions = process.env.CORS_ORIGIN ? { origin: process.env.CORS_ORIGIN } : {};
+app.use(cors(corsOptions));
 app.use(express.json());
 
-// Serve static files from uploads directory
 const uploadsPath = path.join(__dirname, '../uploads');
 console.log('Serving uploads from:', uploadsPath);
 app.use('/uploads', express.static(uploadsPath));
@@ -44,7 +44,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/vendors', vendorRoutes);
 app.use('/api/events', eventRoutes);
 
-// Photo upload route
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'Server is working' });
+});
+
 app.post('/api/upload', upload.single('photo'), (req, res) => {
   try {
     if (!req.file) {

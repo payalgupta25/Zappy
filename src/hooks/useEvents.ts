@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useVendor } from './useVendor';
 import { toast } from 'sonner';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
 export type EventStatus = 'pending' | 'checked_in' | 'started' | 'setup_complete' | 'completed';
 
 export interface Event {
@@ -49,7 +51,7 @@ export function useEvents() {
     }
 
     try {
-      const response = await fetch('/api/events', {
+      const response = await fetch(`${API_BASE_URL}/events`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.ok) {
@@ -81,7 +83,7 @@ export function useEvents() {
     if (!token) return { error: new Error('No token') };
 
     try {
-      const response = await fetch('/api/events', {
+      const response = await fetch(`${API_BASE_URL}/events`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -113,7 +115,7 @@ export function useEvents() {
     if (!token) return { data: null, error: new Error('No token') };
 
     try {
-      const response = await fetch(`/api/events/${eventId}`, {
+      const response = await fetch(`${API_BASE_URL}/events/${eventId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(updates),
