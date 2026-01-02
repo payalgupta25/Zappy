@@ -53,7 +53,7 @@ export function useVendor() {
     if (!token) return { error: new Error('No token') };
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/vendors`, {
+      const response = await fetch(`${API_BASE_URL}/vendors`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name, email, phone }),
