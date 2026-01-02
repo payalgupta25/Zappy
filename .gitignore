@@ -17,6 +17,8 @@ dist-ssr
 server/uploads
 uploads
 
+server/.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
