@@ -1,73 +1,52 @@
-# Welcome to your Lovable project
+# Zappy 🚀
 
-## Project info
+Zappy is a full-stack MERN event management platform designed for seamless vendor check-ins, event tracking, OTP verification, and setup completion. The project focuses on smooth real-time workflows with a clean UI and reliable backend.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+---
 
-## How can I edit this code?
+## 🌐 Live Demo
 
-There are several ways of editing your application.
+Frontend: https://zappy-one.vercel.app  
+Backend: Hosted on Render
 
-**Use Lovable**
+---
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## ✨ Features
 
-Changes made via Lovable will be committed automatically to this repo.
+- Vendor dashboard
+- Event listing & tracking
+- Vendor check-in with photo & location
+- Start & closing OTP verification
+- Pre-setup and post-setup image uploads
+- Event status progression
+- Secure API integration
+- SPA routing with refresh support
 
-**Use your preferred IDE**
+---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 🛠 Tech Stack
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
+### Frontend
+- React (Vite)
 - TypeScript
-- React
-- shadcn-ui
 - Tailwind CSS
+- shadcn/ui
+- React Router
 
-## How can I deploy this project?
+### Backend
+- Node.js
+- Express.js
+- MongoDB + Mongoose
+- OTP verification logic
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+### Deployment
+- Frontend: Vercel
+- Backend: Render
 
-## Can I connect a custom domain to my Lovable project?
+### Snippets:
+<img width="538" height="893" alt="image" src="https://github.com/user-attachments/assets/ac15279c-2122-4191-a8fc-fb00e0ccf3e1" />
+<img width="539" height="846" alt="image" src="https://github.com/user-attachments/assets/f8865d22-c795-4de2-b437-5e522ab84111" />
+<img width="539" height="844" alt="image" src="https://github.com/user-attachments/assets/53693983-9085-4450-9a66-87b529d78de5" />
+<img width="539" height="711" alt="image" src="https://github.com/user-attachments/assets/043f814e-3a25-44a5-967d-920a59ad7f73" />
 
-Yes, you can!
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
