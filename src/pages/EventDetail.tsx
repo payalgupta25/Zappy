@@ -70,7 +70,7 @@ const EventDetail = () => {
       
       if (photoUrl) {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/events/${event._id}/checkin`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/events/${event._id}/checkin`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({
@@ -99,7 +99,7 @@ const EventDetail = () => {
   const handleVerifyStartOtp = async () => {
     setUpdating(true);
     const token = localStorage.getItem('token');
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/events/${event._id}/verify-start-otp`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/events/${event._id}/verify-start-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ otp }),
@@ -135,7 +135,7 @@ const EventDetail = () => {
     const photoUrl = await uploadPhoto(file, 'post-setup');
     if (photoUrl) {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/events/${event._id}/setup-complete`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/events/${event._id}/setup-complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -159,7 +159,7 @@ const EventDetail = () => {
   const handleVerifyClosingOtp = async () => {
     setUpdating(true);
     const token = localStorage.getItem('token');
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/events/${event._id}/verify-closing-otp`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/events/${event._id}/verify-closing-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ otp }),
