@@ -19,8 +19,11 @@ const supabase = createClient(
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-const corsOptions = process.env.CORS_ORIGIN ? { origin: process.env.CORS_ORIGIN } : {};
-app.use(cors(corsOptions));
+app.use(cors({
+  origin: ['https://zappy-one.vercel.app'],
+  credentials: true
+}));
+
 app.use(express.json());
 
 // Configure multer for file uploads (memory storage for Supabase)

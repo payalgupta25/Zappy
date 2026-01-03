@@ -106,7 +106,7 @@ const Auth = () => {
         </div>
 
         <p className="text-primary-foreground/50 text-sm">
-          © 2024 Zappy. All rights reserved.
+          © 2026 Zappy. All rights reserved.
         </p>
       </div>
 

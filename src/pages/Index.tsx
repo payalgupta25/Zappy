@@ -121,7 +121,7 @@ const Index = () => {
             Zappy<span className="text-primary">.</span>
           </p>
           <p className="text-sm text-accent-foreground/60">
-            © 2024 Zappy. Vendor Event Day Tracker.
+            © 2026 Zappy. Vendor Event Day Tracker.
           </p>
         </div>
       </footer>
